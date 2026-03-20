@@ -1,9 +1,9 @@
 {
   "name": "album-downloader-mvp",
   "version": "1.0.0",
-  "main": "server.js",
+  "main": "src/server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node src/server.js"
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",
