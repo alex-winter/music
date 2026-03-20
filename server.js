@@ -7,6 +7,8 @@ const cors = require('cors');
 const { exec } = require('child_process');
 
 const app = express();
+const PORT = process.env.PORT || 3000;
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
@@ -77,7 +79,7 @@ app.post('/download-album', async (req, res) => {
 
         const outputPath = path.join(DOWNLOAD_DIR, safeName);
 
-        const command = `"C:\\Users\\ajwin\\AppData\\Local\\Python\\pythoncore-3.14-64\\Scripts\\yt-dlp.exe" --js-runtimes node:"C:\\Program Files\\nodejs\\node.exe" -x --audio-format mp3 -o "${outputPath}.%(ext)s" "${video.url}"`;
+        const command = `yt-dlp -x --audio-format mp3 -o "${outputPath}.%(ext)s" "${video.url}"`;
 
         console.log(`Downloading: ${query}`);
 
@@ -104,6 +106,6 @@ app.post('/download-album', async (req, res) => {
   }
 });
 
-app.listen(3000, () => {
-  console.log('🚀 Server running on http://localhost:3000');
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
