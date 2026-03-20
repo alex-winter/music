@@ -80,6 +80,103 @@
       flex-wrap: wrap;
     }
 
+    .prompt-panel {
+      display: grid;
+      gap: 18px;
+    }
+
+    .prompt-box {
+      min-height: 150px;
+      width: 100%;
+      resize: vertical;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 18px;
+      font: inherit;
+      font-size: 1rem;
+      background: rgba(7, 14, 24, 0.82);
+      color: var(--text);
+      outline: none;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+
+    .prompt-box::placeholder {
+      color: #6f83a0;
+    }
+
+    .prompt-box:focus {
+      border-color: rgba(77, 182, 255, 0.65);
+      box-shadow: 0 0 0 4px rgba(77, 182, 255, 0.12);
+    }
+
+    .prompt-tips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .tip-chip {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(24, 40, 62, 0.82);
+      color: var(--muted);
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .playlist-result {
+      display: grid;
+      gap: 14px;
+      margin-top: 22px;
+    }
+
+    .playlist-summary {
+      padding: 18px;
+      border-radius: 22px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(24, 40, 62, 0.95) 0%, rgba(15, 27, 43, 0.95) 100%);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .playlist-summary h2 {
+      margin: 0 0 8px;
+      font-size: 1.5rem;
+    }
+
+    .playlist-song {
+      display: grid;
+      gap: 10px;
+      padding: 16px;
+      border-radius: 22px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(20, 34, 53, 0.96) 0%, rgba(12, 22, 35, 0.96) 100%);
+    }
+
+    .playlist-song-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+      flex-wrap: wrap;
+    }
+
+    .playlist-song h3 {
+      margin: 0 0 4px;
+      font-size: 1.05rem;
+    }
+
+    .playlist-reason {
+      color: var(--muted);
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .track-meta {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
     .session-bar {
       display: flex;
       justify-content: space-between;
@@ -310,6 +407,7 @@
     let downloadedTrackKeys = new Set();
     let downloadedTracksByKey = new Map();
     let currentUser = null;
+    let currentAiPlaylist = null;
 
     async function loadSession() {
       const response = await fetch('/auth/session', { credentials: 'same-origin' });
@@ -342,6 +440,16 @@
           <form method="POST" action="/auth/logout">
             <button type="submit" class="secondary">Log Out</button>
           </form>
+        </div>
+      `;
+    }
+
+    function renderTopNav(activeView = '') {
+      return `
+        <div class="actions">
+          <button class="${activeView === 'library' ? '' : 'secondary'}" onclick="showDownloads()">My Downloads</button>
+          <button class="${activeView === 'ai' ? '' : 'secondary'}" onclick="showAiPlaylistPage()">AI Playlist</button>
+          <button onclick="renderHome()">Home</button>
         </div>
       `;
     }
@@ -467,9 +575,7 @@
               <h1>Album Downloader</h1>
               <p>Search artists, preview tracks, and open your downloaded library.</p>
             </div>
-            <div class="actions">
-              <button class="secondary" onclick="showDownloads()">My Downloads</button>
-            </div>
+            ${renderTopNav('home')}
           </div>
           <input class="search-box" id="search" placeholder="Search for an artist..." autocomplete="off" oninput="liveSearch()" />
           <div class="results" id="results"></div>
@@ -517,10 +623,7 @@
               <h1>${artist.name}</h1>
               <p>Open an album to sample tracks and add songs to your library.</p>
             </div>
-            <div class="actions">
-              <button class="secondary" onclick="showDownloads()">My Downloads</button>
-              <button onclick="renderHome()">Back</button>
-            </div>
+            ${renderTopNav()}
           </div>
           <div class="album-grid" id="albums"></div>
         </section>
@@ -557,10 +660,7 @@
               <h1>${album.title}</h1>
               <p>Sample tracks and add the ones you want to your library.</p>
             </div>
-            <div class="actions">
-              <button class="secondary" onclick="showDownloads()">My Downloads</button>
-              <button onclick="renderHome()">Back</button>
-            </div>
+            ${renderTopNav()}
           </div>
           <img class="cover" src="${album.cover_medium}" alt="${album.title}" style="max-width: 220px;" />
           <div class="track-list" id="tracks"></div>
@@ -641,8 +741,9 @@
               <p>Play anything already saved in your downloads folder.</p>
             </div>
             <div class="actions">
-              <button class="secondary" onclick="showDownloads()">Refresh</button>
-              <button onclick="renderHome()">Back</button>
+              <button onclick="showDownloads()">Refresh</button>
+              <button class="secondary" onclick="showAiPlaylistPage()">AI Playlist</button>
+              <button class="secondary" onclick="renderHome()">Home</button>
             </div>
           </div>
           <div class="download-list" id="downloads-list"></div>
@@ -680,6 +781,170 @@
       });
 
       alert('Album added to library');
+    }
+
+    async function addTrackToLibrary(track, button, trackElement) {
+      const originalLabel = button.textContent;
+      button.disabled = true;
+      showButtonLoader(button, 'Adding');
+
+      try {
+        const response = await fetch('/download-track', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ track })
+        });
+
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload.error || 'Track add failed');
+        }
+
+        await refreshDownloadedTrackKeys();
+        updateTrackLibraryState(track, trackElement);
+        button.classList.remove('is-loading');
+        button.textContent = 'Added';
+      } catch (error) {
+        alert(error.message);
+        button.classList.remove('is-loading');
+        button.textContent = originalLabel;
+        button.disabled = false;
+      }
+    }
+
+    function renderAiPlaylistResults() {
+      const container = document.getElementById('playlist-result');
+
+      if (!currentAiPlaylist) {
+        container.innerHTML = '';
+        return;
+      }
+
+      container.innerHTML = '';
+
+      const summary = document.createElement('div');
+      summary.className = 'playlist-summary';
+      summary.innerHTML = `
+        <h2>${currentAiPlaylist.title}</h2>
+        <p>${currentAiPlaylist.description}</p>
+        ${currentAiPlaylist.autoAddedFirstTrack ? '<p class="track-meta">The first song was automatically added to your library.</p>' : ''}
+      `;
+      container.appendChild(summary);
+
+      currentAiPlaylist.songs.forEach((song, index) => {
+        const songCard = document.createElement('div');
+        songCard.className = 'playlist-song';
+        const matchedTrack = song.matchedTrack;
+        const inLibrary = matchedTrack && isTrackInLibrary(matchedTrack);
+
+        songCard.innerHTML = `
+          <div class="playlist-song-head">
+            <div>
+              <h3>${index + 1}. ${song.title}</h3>
+              <div class="track-meta">${song.artist}</div>
+            </div>
+            <div class="track-actions">
+              <span class="track-status"${inLibrary ? '' : ' hidden'}>${inLibrary ? 'In Library' : ''}</span>
+              <button type="button" class="preview-button" data-default-label="Sample"${matchedTrack?.preview ? '' : ' disabled'}>Sample</button>
+              <button type="button" class="secondary library-button" data-default-label="Add"${matchedTrack ? '' : ' disabled'}>${inLibrary ? 'Added' : 'Add'}</button>
+            </div>
+          </div>
+          <p class="playlist-reason">${song.reason || 'Fits the overall prompt and mood.'}</p>
+          <div class="track-meta">Matched in Deezer: ${matchedTrack.title} • ${matchedTrack.artist.name}</div>
+        `;
+
+        const previewButton = songCard.querySelector('.preview-button');
+        previewButton.onclick = event => {
+          event.stopPropagation();
+          if (matchedTrack?.preview) {
+            togglePreview(matchedTrack.preview, event.currentTarget);
+          }
+        };
+
+        const libraryButton = songCard.querySelector('.library-button');
+        if (matchedTrack && !inLibrary) {
+          libraryButton.onclick = event => {
+            event.stopPropagation();
+            addTrackToLibrary(matchedTrack, event.currentTarget, songCard);
+          };
+        }
+
+        container.appendChild(songCard);
+      });
+    }
+
+    function showAiPlaylistPage() {
+      stopCurrentPreview();
+      currentAiPlaylist = null;
+
+      document.getElementById('app').innerHTML = `
+        <section class="page">
+          ${renderSessionBar()}
+          <div class="page-head">
+            <div>
+              <h1>AI Playlist</h1>
+              <p>Describe a mood, scene, memory, activity, or vibe, and the AI will build a playlist concept around it.</p>
+            </div>
+            ${renderTopNav('ai')}
+          </div>
+          <div class="prompt-panel">
+            <textarea id="playlist-prompt" class="prompt-box" placeholder="Try something like: songs for a rainy midnight train ride through Tokyo, warm synths, dreamy but not sleepy"></textarea>
+            <div class="prompt-tips">
+              <button class="tip-chip" type="button" onclick="fillPrompt('songs for a rainy midnight train ride through Tokyo, warm synths, dreamy but not sleepy')">Midnight Tokyo</button>
+              <button class="tip-chip" type="button" onclick="fillPrompt('an energetic gym playlist with confident women in pop and electronic music')">Gym Energy</button>
+              <button class="tip-chip" type="button" onclick="fillPrompt('a golden hour road trip playlist that feels nostalgic, open, and cinematic')">Golden Hour Drive</button>
+            </div>
+            <div class="actions">
+              <button id="generate-playlist-button" onclick="generateAiPlaylist()">Generate Playlist</button>
+            </div>
+          </div>
+          <div class="playlist-result" id="playlist-result"></div>
+        </section>
+      `;
+    }
+
+    function fillPrompt(value) {
+      const promptBox = document.getElementById('playlist-prompt');
+      promptBox.value = value;
+      promptBox.focus();
+    }
+
+    async function generateAiPlaylist() {
+      const promptBox = document.getElementById('playlist-prompt');
+      const prompt = promptBox.value.trim();
+
+      if (!prompt) {
+        alert('Please enter a playlist prompt first.');
+        return;
+      }
+
+      const button = document.getElementById('generate-playlist-button');
+      button.disabled = true;
+      showButtonLoader(button, 'Generating');
+
+      try {
+        await refreshDownloadedTrackKeys();
+        const response = await fetch('/ai/playlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt })
+        });
+
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload.error || 'Playlist generation failed');
+        }
+
+        currentAiPlaylist = await response.json();
+        await refreshDownloadedTrackKeys();
+        renderAiPlaylistResults();
+      } catch (error) {
+        alert(error.message);
+      } finally {
+        button.classList.remove('is-loading');
+        button.textContent = 'Generate Playlist';
+        button.disabled = false;
+      }
     }
 
     loadSession().then(user => {

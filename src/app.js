@@ -5,6 +5,7 @@ const cors = require('cors');
 require('./config/env');
 
 const authRoutes = require('./routes/authRoutes');
+const aiController = require('./controllers/aiController');
 const musicController = require('./controllers/musicController');
 const downloadController = require('./controllers/downloadController');
 const { DOWNLOAD_DIR } = require('./services/downloadService');
@@ -32,6 +33,7 @@ app.get('/album/:id', musicController.getAlbumDetails);
 app.get('/downloads', downloadController.listDownloads);
 app.post('/download-album', downloadController.downloadAlbum);
 app.post('/download-track', downloadController.downloadTrack);
+app.post('/ai/playlist', aiController.generatePlaylist);
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });

@@ -12,6 +12,8 @@ services:
       PORT: 3000
       APP_URL: ${APP_URL}
       DATABASE_URL: postgresql://music:music@db:5432/music_app?schema=public
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      GROQ_MODEL: ${GROQ_MODEL}
       SESSION_SECRET: ${SESSION_SECRET}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}

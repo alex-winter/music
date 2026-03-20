@@ -18,6 +18,8 @@ module.exports = {
   nodeEnv: process.env.NODE_ENV || 'development',
   port: process.env.PORT || 3000,
   databaseUrl: process.env.DATABASE_URL,
+  groqApiKey: process.env.GROQ_API_KEY || '',
+  groqModel: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
   googleClientId: process.env.GOOGLE_CLIENT_ID || '',
   googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
   sessionSecret: process.env.SESSION_SECRET || '',
