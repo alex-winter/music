@@ -6,15 +6,18 @@
   <title>Album Downloader</title>
   <style>
     :root {
-      --bg: #f5efe5;
-      --panel: #fffaf2;
-      --panel-strong: #fff;
-      --text: #1d1b18;
-      --muted: #6c655d;
-      --accent: #cb5a2c;
-      --accent-dark: #903812;
-      --border: #e4d8c6;
-      --shadow: 0 18px 40px rgba(78, 53, 36, 0.12);
+      --bg: #07111f;
+      --bg-top: #0b1a2d;
+      --panel: rgba(14, 24, 39, 0.86);
+      --panel-strong: #122033;
+      --panel-soft: #18283e;
+      --text: #f3f7fb;
+      --muted: #91a3bb;
+      --accent: #4db6ff;
+      --accent-dark: #2e8fd8;
+      --accent-soft: rgba(77, 182, 255, 0.14);
+      --border: rgba(145, 163, 187, 0.22);
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
     }
 
     * {
@@ -24,11 +27,13 @@
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: Georgia, "Times New Roman", serif;
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
       background:
-        radial-gradient(circle at top left, rgba(203, 90, 44, 0.16), transparent 28%),
-        linear-gradient(180deg, #f8f1e8 0%, #efe4d3 100%);
+        radial-gradient(circle at top left, rgba(77, 182, 255, 0.16), transparent 24%),
+        radial-gradient(circle at top right, rgba(58, 123, 213, 0.18), transparent 30%),
+        linear-gradient(180deg, var(--bg-top) 0%, var(--bg) 55%, #050b14 100%);
       color: var(--text);
+      letter-spacing: 0.01em;
     }
 
     .shell {
@@ -39,9 +44,9 @@
 
     .hero,
     .page {
-      background: rgba(255, 250, 242, 0.86);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(228, 216, 198, 0.8);
+      background: linear-gradient(180deg, rgba(18, 32, 51, 0.92) 0%, rgba(10, 18, 31, 0.96) 100%);
+      backdrop-filter: blur(18px);
+      border: 1px solid var(--border);
       border-radius: 28px;
       box-shadow: var(--shadow);
       padding: 28px;
@@ -61,6 +66,7 @@
       margin: 0;
       font-size: clamp(2rem, 3vw, 3rem);
       line-height: 1;
+      letter-spacing: -0.03em;
     }
 
     p {
@@ -76,18 +82,20 @@
 
     button,
     .back {
-      border: 0;
+      border: 1px solid transparent;
       border-radius: 999px;
       padding: 12px 18px;
-      background: var(--accent);
-      color: #fff9f4;
+      background: linear-gradient(180deg, var(--accent) 0%, var(--accent-dark) 100%);
+      color: #04111f;
       cursor: pointer;
       font: inherit;
-      transition: transform 140ms ease, background 140ms ease;
+      font-weight: 700;
+      transition: transform 140ms ease, background 140ms ease, border-color 140ms ease, opacity 140ms ease;
       text-decoration: none;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      box-shadow: 0 12px 28px rgba(31, 112, 173, 0.25);
     }
 
     button:hover,
@@ -97,8 +105,16 @@
     }
 
     button.secondary {
-      background: #efe1ce;
+      background: var(--panel-soft);
       color: var(--text);
+      border-color: var(--border);
+      box-shadow: none;
+    }
+
+    button:disabled {
+      cursor: default;
+      opacity: 0.72;
+      transform: none;
     }
 
     .search-box {
@@ -108,9 +124,20 @@
       padding: 16px 18px;
       font: inherit;
       font-size: 1.05rem;
-      background: var(--panel-strong);
+      background: rgba(7, 14, 24, 0.82);
       color: var(--text);
       margin-bottom: 20px;
+      outline: none;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+
+    .search-box::placeholder {
+      color: #6f83a0;
+    }
+
+    .search-box:focus {
+      border-color: rgba(77, 182, 255, 0.65);
+      box-shadow: 0 0 0 4px rgba(77, 182, 255, 0.12);
     }
 
     .results,
@@ -130,11 +157,11 @@
     .album,
     .track,
     .download-card {
-      background: var(--panel-strong);
+      background: linear-gradient(180deg, rgba(24, 40, 62, 0.95) 0%, rgba(15, 27, 43, 0.95) 100%);
       border: 1px solid var(--border);
       border-radius: 22px;
       padding: 14px;
-      box-shadow: 0 10px 26px rgba(78, 53, 36, 0.08);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
     }
 
     .artist-card,
@@ -146,7 +173,8 @@
     .artist-card:hover,
     .album:hover {
       transform: translateY(-3px);
-      box-shadow: 0 14px 30px rgba(78, 53, 36, 0.13);
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28);
+      border-color: rgba(77, 182, 255, 0.28);
     }
 
     .artist-card img,
@@ -159,11 +187,18 @@
       margin-bottom: 10px;
     }
 
+    .hero-head p,
+    .page-head p {
+      margin-top: 8px;
+      max-width: 46ch;
+    }
+
     .track {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 12px;
+      background: linear-gradient(180deg, rgba(20, 34, 53, 0.96) 0%, rgba(12, 22, 35, 0.96) 100%);
     }
 
     .track button {
@@ -175,6 +210,34 @@
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .track-status {
+      color: var(--accent);
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .is-loading {
+      gap: 10px;
+    }
+
+    .button-loader {
+      width: 0.95rem;
+      height: 0.95rem;
+      border-radius: 999px;
+      border: 2px solid rgba(243, 247, 251, 0.22);
+      border-top-color: var(--text);
+      animation: spin 800ms linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     .download-card h3 {
@@ -190,6 +253,7 @@
 
     audio {
       width: 100%;
+      filter: brightness(0.92) contrast(1.05);
     }
 
     .empty {
@@ -198,7 +262,7 @@
       border-radius: 18px;
       color: var(--muted);
       text-align: center;
-      background: rgba(255, 255, 255, 0.45);
+      background: rgba(14, 24, 39, 0.7);
     }
 
     @media (max-width: 640px) {
@@ -217,10 +281,27 @@
     let currentTracks = [];
     let currentPreviewAudio = null;
     let currentPreviewButton = null;
+    let downloadedTrackKeys = new Set();
+    let downloadedTracksByKey = new Map();
+
+    function getTrackKey(track) {
+      return `${track.artist.name} - ${track.title}`
+        .replace(/[^a-z0-9]/gi, '_')
+        .toLowerCase();
+    }
+
+    async function refreshDownloadedTrackKeys() {
+      const res = await fetch('/downloads');
+      const downloads = await res.json();
+      downloadedTrackKeys = new Set(downloads.map(file => file.trackKey));
+      downloadedTracksByKey = new Map(downloads.map(file => [file.trackKey, file]));
+      return downloads;
+    }
 
     function resetPreviewButton() {
       if (currentPreviewButton) {
-        currentPreviewButton.textContent = 'Preview';
+        currentPreviewButton.textContent = currentPreviewButton.dataset.defaultLabel || 'Play';
+        currentPreviewButton.classList.remove('is-loading');
       }
     }
 
@@ -255,6 +336,7 @@
 
       currentPreviewAudio = new Audio(previewUrl);
       currentPreviewButton = button;
+      button.classList.remove('is-loading');
       button.textContent = 'Pause';
 
       currentPreviewAudio.addEventListener('ended', () => {
@@ -262,6 +344,54 @@
       });
 
       currentPreviewAudio.play();
+    }
+
+    function isTrackInLibrary(track) {
+      return downloadedTrackKeys.has(getTrackKey(track));
+    }
+
+    function showButtonLoader(button, label) {
+      button.classList.add('is-loading');
+      button.innerHTML = `<span class="button-loader" aria-hidden="true"></span><span>${label}</span>`;
+    }
+
+    function updateTrackLibraryState(track, trackElement) {
+      const status = trackElement.querySelector('.track-status');
+
+      if (isTrackInLibrary(track)) {
+        status.textContent = 'In Library';
+        status.hidden = false;
+      } else {
+        status.textContent = '';
+        status.hidden = true;
+      }
+    }
+
+    async function ensureTrackReady(track) {
+      const trackKey = getTrackKey(track);
+
+      if (downloadedTracksByKey.has(trackKey)) {
+        return downloadedTracksByKey.get(trackKey);
+      }
+
+      const response = await fetch('/download-track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ track })
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || 'Track preparation failed');
+      }
+
+      await refreshDownloadedTrackKeys();
+
+      if (!downloadedTracksByKey.has(trackKey)) {
+        throw new Error('Track is ready, but the file was not found');
+      }
+
+      return downloadedTracksByKey.get(trackKey);
     }
 
     function renderHome() {
@@ -321,7 +451,7 @@
           <div class="page-head">
             <div>
               <h1>${artist.name}</h1>
-              <p>Select an album to preview tracks or start a download.</p>
+              <p>Open an album to sample tracks and add songs to your library.</p>
             </div>
             <div class="actions">
               <button class="secondary" onclick="showDownloads()">My Downloads</button>
@@ -351,6 +481,7 @@
 
       const res = await fetch(`/album/${id}`);
       const album = await res.json();
+      await refreshDownloadedTrackKeys();
 
       currentTracks = album.tracks.data;
 
@@ -359,7 +490,7 @@
           <div class="page-head">
             <div>
               <h1>${album.title}</h1>
-              <p>Preview tracks, then download the album to your local library.</p>
+              <p>Sample tracks and add the ones you want to your library.</p>
             </div>
             <div class="actions">
               <button class="secondary" onclick="showDownloads()">My Downloads</button>
@@ -369,7 +500,7 @@
           <img class="cover" src="${album.cover_medium}" alt="${album.title}" style="max-width: 220px;" />
           <div class="track-list" id="tracks"></div>
           <div class="actions" style="margin-top: 18px;">
-            <button onclick="downloadAlbum()">Download Album</button>
+            <button onclick="downloadAlbum()">Add Album To Library</button>
           </div>
         </section>
       `;
@@ -382,10 +513,12 @@
         div.innerHTML = `
           <span>${i + 1}. ${t.title}</span>
           <div class="track-actions">
-            <button type="button" class="preview-button">Preview</button>
-            <button type="button" class="secondary download-track-button">Download</button>
+            <span class="track-status" hidden></span>
+            <button type="button" class="preview-button" data-default-label="Sample">Sample</button>
+            <button type="button" class="secondary download-track-button" data-default-label="Play">Play</button>
           </div>
         `;
+        updateTrackLibraryState(t, div);
         div.querySelector('.preview-button').onclick = event => {
           event.stopPropagation();
           togglePreview(t.preview, event.currentTarget);
@@ -393,30 +526,37 @@
         div.querySelector('.download-track-button').onclick = async event => {
           event.stopPropagation();
           const button = event.currentTarget;
-          const originalLabel = button.textContent;
+          const isCurrentTrack = currentPreviewAudio && currentPreviewButton === button;
+
+          if (isCurrentTrack && !currentPreviewAudio.paused) {
+            currentPreviewAudio.pause();
+            button.textContent = 'Resume';
+            return;
+          }
+
+          if (isCurrentTrack && currentPreviewAudio.paused) {
+            currentPreviewAudio.play();
+            button.textContent = 'Pause';
+            return;
+          }
+
           button.disabled = true;
-          button.textContent = 'Downloading...';
+          button.classList.remove('is-loading');
+          if (isTrackInLibrary(t)) {
+            button.textContent = 'Play';
+          } else {
+            showButtonLoader(button, 'Preparing');
+          }
 
           try {
-            const response = await fetch('/download-track', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ track: t })
-            });
-
-            if (!response.ok) {
-              const payload = await response.json().catch(() => ({}));
-              throw new Error(payload.error || 'Track download failed');
-            }
-
-            button.textContent = 'Downloaded';
-            setTimeout(() => {
-              button.textContent = originalLabel;
-              button.disabled = false;
-            }, 1200);
+            const file = await ensureTrackReady(t);
+            updateTrackLibraryState(t, div);
+            button.disabled = false;
+            togglePreview(file.url, button);
           } catch (err) {
             alert(err.message);
-            button.textContent = originalLabel;
+            button.classList.remove('is-loading');
+            button.textContent = button.dataset.defaultLabel;
             button.disabled = false;
           }
         };
@@ -443,8 +583,7 @@
         </section>
       `;
 
-      const res = await fetch('/downloads');
-      const downloads = await res.json();
+      const downloads = await refreshDownloadedTrackKeys();
       const container = document.getElementById('downloads-list');
 
       if (!downloads.length) {
@@ -474,7 +613,7 @@
         body: JSON.stringify({ tracks: currentTracks })
       });
 
-      alert('Download started');
+      alert('Album added to library');
     }
 
     renderHome();

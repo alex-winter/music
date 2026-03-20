@@ -10,6 +10,12 @@ if (!fs.existsSync(DOWNLOAD_DIR)) {
   fs.mkdirSync(DOWNLOAD_DIR);
 }
 
+function getTrackBaseName(artistName, trackTitle) {
+  return `${artistName} - ${trackTitle}`
+    .replace(/[^a-z0-9]/gi, '_')
+    .toLowerCase();
+}
+
 function getDownloadEntries() {
   return fs
     .readdirSync(DOWNLOAD_DIR, { withFileTypes: true })
@@ -25,6 +31,7 @@ function getDownloadEntries() {
         ext,
         size: stats.size,
         modifiedAt: stats.mtimeMs,
+        trackKey: path.basename(entry.name, ext),
         url: `/media/${encodeURIComponent(entry.name)}`
       };
     })
@@ -32,7 +39,22 @@ function getDownloadEntries() {
     .sort((a, b) => b.modifiedAt - a.modifiedAt);
 }
 
+function isTrackDownloaded(track) {
+  const trackKey = getTrackBaseName(track.artist.name, track.title);
+
+  return fs.readdirSync(DOWNLOAD_DIR).some(fileName => {
+    const ext = path.extname(fileName).toLowerCase();
+    const baseName = path.basename(fileName, ext);
+
+    return AUDIO_EXTENSIONS.includes(ext) && baseName === trackKey;
+  });
+}
+
 async function downloadTrack(track) {
+  if (isTrackDownloaded(track)) {
+    return true;
+  }
+
   const query = `${track.artist.name} - ${track.title}`;
   const search = await yts(query);
 
@@ -47,11 +69,7 @@ async function downloadTrack(track) {
     return false;
   }
 
-  const safeName = `${track.artist.name} - ${track.title}`
-    .replace(/[^a-z0-9]/gi, '_')
-    .toLowerCase();
-
-  const outputPath = path.join(DOWNLOAD_DIR, safeName);
+  const outputPath = path.join(DOWNLOAD_DIR, getTrackBaseName(track.artist.name, track.title));
   const command = `yt-dlp -x --audio-format mp3 -o "${outputPath}.%(ext)s" "${video.url}"`;
 
   console.log(`Downloading: ${query}`);
@@ -82,5 +100,7 @@ module.exports = {
   DOWNLOAD_DIR,
   downloadTrack,
   downloadAlbum,
-  getDownloadEntries
+  getDownloadEntries,
+  getTrackBaseName,
+  isTrackDownloaded
 };
