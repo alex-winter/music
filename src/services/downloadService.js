@@ -32,42 +32,46 @@ function getDownloadEntries() {
     .sort((a, b) => b.modifiedAt - a.modifiedAt);
 }
 
+async function downloadTrack(track) {
+  const query = `${track.artist.name} - ${track.title}`;
+  const search = await yts(query);
+
+  const video = search.videos.find(v =>
+    v.seconds > 30 &&
+    v.seconds < 600 &&
+    v.title.toLowerCase().includes(track.title.toLowerCase())
+  );
+
+  if (!video) {
+    console.log(`No video found for ${query}`);
+    return false;
+  }
+
+  const safeName = `${track.artist.name} - ${track.title}`
+    .replace(/[^a-z0-9]/gi, '_')
+    .toLowerCase();
+
+  const outputPath = path.join(DOWNLOAD_DIR, safeName);
+  const command = `yt-dlp -x --audio-format mp3 -o "${outputPath}.%(ext)s" "${video.url}"`;
+
+  console.log(`Downloading: ${query}`);
+
+  return new Promise(resolve => {
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error downloading ${query}`, stderr);
+        return resolve(false);
+      }
+
+      resolve(true);
+    });
+  });
+}
+
 async function downloadAlbum(tracks) {
   for (const track of tracks) {
     try {
-      const query = `${track.artist.name} - ${track.title}`;
-      const search = await yts(query);
-
-      const video = search.videos.find(v =>
-        v.seconds > 30 &&
-        v.seconds < 600 &&
-        v.title.toLowerCase().includes(track.title.toLowerCase())
-      );
-
-      if (!video) {
-        console.log(`No video found for ${query}`);
-        continue;
-      }
-
-      const safeName = `${track.artist.name} - ${track.title}`
-        .replace(/[^a-z0-9]/gi, '_')
-        .toLowerCase();
-
-      const outputPath = path.join(DOWNLOAD_DIR, safeName);
-      const command = `yt-dlp -x --audio-format mp3 -o "${outputPath}.%(ext)s" "${video.url}"`;
-
-      console.log(`Downloading: ${query}`);
-
-      await new Promise(resolve => {
-        exec(command, (error, stdout, stderr) => {
-          if (error) {
-            console.error(`Error downloading ${query}`, stderr);
-            return resolve();
-          }
-
-          resolve();
-        });
-      });
+      await downloadTrack(track);
     } catch (err) {
       console.error(`Track failed: ${track.title}`, err.message);
     }
@@ -76,6 +80,7 @@ async function downloadAlbum(tracks) {
 
 module.exports = {
   DOWNLOAD_DIR,
+  downloadTrack,
   downloadAlbum,
   getDownloadEntries
 };

@@ -171,6 +171,12 @@
       font-size: 0.95rem;
     }
 
+    .track-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
     .download-card h3 {
       margin: 0 0 6px;
       font-size: 1.08rem;
@@ -209,8 +215,58 @@
 
   <script>
     let currentTracks = [];
+    let currentPreviewAudio = null;
+    let currentPreviewButton = null;
+
+    function resetPreviewButton() {
+      if (currentPreviewButton) {
+        currentPreviewButton.textContent = 'Preview';
+      }
+    }
+
+    function stopCurrentPreview() {
+      if (currentPreviewAudio) {
+        currentPreviewAudio.pause();
+        currentPreviewAudio.currentTime = 0;
+        currentPreviewAudio = null;
+      }
+
+      resetPreviewButton();
+      currentPreviewButton = null;
+    }
+
+    function togglePreview(previewUrl, button) {
+      if (!previewUrl) {
+        return;
+      }
+
+      if (currentPreviewAudio && currentPreviewButton === button) {
+        if (currentPreviewAudio.paused) {
+          currentPreviewAudio.play();
+          button.textContent = 'Pause';
+        } else {
+          currentPreviewAudio.pause();
+          button.textContent = 'Resume';
+        }
+        return;
+      }
+
+      stopCurrentPreview();
+
+      currentPreviewAudio = new Audio(previewUrl);
+      currentPreviewButton = button;
+      button.textContent = 'Pause';
+
+      currentPreviewAudio.addEventListener('ended', () => {
+        stopCurrentPreview();
+      });
+
+      currentPreviewAudio.play();
+    }
 
     function renderHome() {
+      stopCurrentPreview();
+
       document.getElementById('app').innerHTML = `
         <section class="hero">
           <div class="hero-head">
@@ -255,6 +311,8 @@
     }
 
     async function showAlbums(artist) {
+      stopCurrentPreview();
+
       const res = await fetch(`/artist/${artist.id}/albums`);
       const albums = await res.json();
 
@@ -289,6 +347,8 @@
     }
 
     async function showTracks(id) {
+      stopCurrentPreview();
+
       const res = await fetch(`/album/${id}`);
       const album = await res.json();
 
@@ -321,17 +381,52 @@
         div.className = 'track';
         div.innerHTML = `
           <span>${i + 1}. ${t.title}</span>
-          <button type="button">Preview</button>
+          <div class="track-actions">
+            <button type="button" class="preview-button">Preview</button>
+            <button type="button" class="secondary download-track-button">Download</button>
+          </div>
         `;
-        div.querySelector('button').onclick = event => {
+        div.querySelector('.preview-button').onclick = event => {
           event.stopPropagation();
-          new Audio(t.preview).play();
+          togglePreview(t.preview, event.currentTarget);
+        };
+        div.querySelector('.download-track-button').onclick = async event => {
+          event.stopPropagation();
+          const button = event.currentTarget;
+          const originalLabel = button.textContent;
+          button.disabled = true;
+          button.textContent = 'Downloading...';
+
+          try {
+            const response = await fetch('/download-track', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ track: t })
+            });
+
+            if (!response.ok) {
+              const payload = await response.json().catch(() => ({}));
+              throw new Error(payload.error || 'Track download failed');
+            }
+
+            button.textContent = 'Downloaded';
+            setTimeout(() => {
+              button.textContent = originalLabel;
+              button.disabled = false;
+            }, 1200);
+          } catch (err) {
+            alert(err.message);
+            button.textContent = originalLabel;
+            button.disabled = false;
+          }
         };
         container.appendChild(div);
       });
     }
 
     async function showDownloads() {
+      stopCurrentPreview();
+
       document.getElementById('app').innerHTML = `
         <section class="page">
           <div class="page-head">

@@ -18,5 +18,6 @@ app.get('/artist/:id/albums', musicController.getArtistAlbums);
 app.get('/album/:id', musicController.getAlbumDetails);
 app.get('/downloads', downloadController.listDownloads);
 app.post('/download-album', downloadController.downloadAlbum);
+app.post('/download-track', downloadController.downloadTrack);
 
 module.exports = app;
