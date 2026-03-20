@@ -10,6 +10,34 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
+      APP_URL: ${APP_URL}
+      DATABASE_URL: postgresql://music:music@db:5432/music_app?schema=public
+      SESSION_SECRET: ${SESSION_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
     volumes:
       - ./downloads:/app/downloads
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "npm run db:deploy && npm start"
     restart: unless-stopped
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: music_app
+      POSTGRES_USER: music
+      POSTGRES_PASSWORD: music
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U music -d music_app"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

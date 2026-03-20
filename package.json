@@ -3,13 +3,24 @@
   "version": "1.0.0",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "prisma:generate": "prisma generate",
+    "db:deploy": "prisma migrate deploy",
+    "db:push": "prisma db push"
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",
+    "@prisma/client": "^6.19.2",
     "axios": "^1.6.0",
+    "connect-pg-simple": "^10.0.0",
     "cors": "^2.8.5",
+    "dotenv": "^17.3.1",
     "express": "^4.18.2",
+    "express-session": "^1.19.0",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "pg": "^8.20.0",
+    "prisma": "^6.19.2",
     "yt-search": "^2.10.4"
   }
 }

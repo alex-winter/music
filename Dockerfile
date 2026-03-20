@@ -34,6 +34,8 @@ RUN npm ci --omit=dev
 
 COPY . .
 
+RUN npx prisma generate
+
 RUN mkdir -p /app/downloads
 
 VOLUME ["/app/downloads"]
