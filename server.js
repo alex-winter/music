@@ -12,9 +12,32 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
+app.use('/media', express.static(path.join(__dirname, 'downloads')));
 
 const DOWNLOAD_DIR = path.join(__dirname, 'downloads');
 if (!fs.existsSync(DOWNLOAD_DIR)) fs.mkdirSync(DOWNLOAD_DIR);
+
+function getDownloadEntries() {
+  return fs
+    .readdirSync(DOWNLOAD_DIR, { withFileTypes: true })
+    .filter(entry => entry.isFile())
+    .map(entry => {
+      const filePath = path.join(DOWNLOAD_DIR, entry.name);
+      const stats = fs.statSync(filePath);
+      const ext = path.extname(entry.name).toLowerCase();
+
+      return {
+        name: entry.name,
+        title: path.basename(entry.name, ext).replace(/_/g, ' '),
+        ext,
+        size: stats.size,
+        modifiedAt: stats.mtimeMs,
+        url: `/media/${encodeURIComponent(entry.name)}`
+      };
+    })
+    .filter(file => ['.mp3', '.m4a', '.webm', '.wav', '.ogg'].includes(file.ext))
+    .sort((a, b) => b.modifiedAt - a.modifiedAt);
+}
 
 // 🔍 Search artists (Deezer)
 app.get('/search', async (req, res) => {
@@ -45,6 +68,16 @@ app.get('/album/:id', async (req, res) => {
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: 'Album fetch failed' });
+  }
+});
+
+// 🎧 List downloaded audio files
+app.get('/downloads', (req, res) => {
+  try {
+    res.json(getDownloadEntries());
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: 'Downloads fetch failed' });
   }
 });
 
