@@ -1,17 +1,17 @@
 services:
-  app:
+  server:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
       args:
         NODE_VERSION: 20.20.1
     ports:
-      - "3000:3000"
+      - "${DEV_BACKEND_PORT:-3001}:3000"
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       PORT: 3000
-      APP_URL: ${APP_URL}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      APP_URL: http://localhost:${DEV_BACKEND_PORT:-3001}
+      FRONTEND_URL: http://localhost:${DEV_FRONTEND_PORT:-5173}
       DATABASE_URL: postgresql://music:music@db:5432/music_app?schema=public
       GROQ_API_KEY: ${GROQ_API_KEY}
       GROQ_MODEL: ${GROQ_MODEL}
@@ -19,12 +19,32 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
     volumes:
+      - .:/app
+      - server_node_modules:/app/node_modules
       - ./downloads:/app/downloads
     depends_on:
       db:
         condition: service_healthy
-    command: sh -c "npm run db:deploy && npm start"
-    restart: unless-stopped
+    command: sh -c "npm run db:deploy && npm run dev:server"
+
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      args:
+        NODE_VERSION: 20.20.1
+    ports:
+      - "${DEV_FRONTEND_PORT:-5173}:5173"
+    environment:
+      NODE_ENV: development
+      VITE_API_PROXY_TARGET: http://server:3000
+    volumes:
+      - .:/app
+      - client_node_modules:/app/node_modules
+    depends_on:
+      - server
+    command: npm run dev:client
+
   db:
     image: postgres:16-alpine
     environment:
@@ -43,4 +63,6 @@ services:
     restart: unless-stopped
 
 volumes:
+  client_node_modules:
   postgres_data:
+  server_node_modules:

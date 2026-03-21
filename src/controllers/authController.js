@@ -1,20 +1,27 @@
 const path = require('path');
+const env = require('../config/env');
+
 const clientIndexPath = path.join(__dirname, '..', '..', 'dist', 'client', 'index.html');
+const frontendLoginUrl = `${env.frontendUrl}/login`;
 
 function renderLoginPage(req, res) {
   if (req.isAuthenticated && req.isAuthenticated()) {
-    return res.redirect('/');
+    return res.redirect(env.frontendUrl);
+  }
+
+  if (env.frontendUrl !== env.appUrl) {
+    return res.redirect(frontendLoginUrl);
   }
 
   return res.sendFile(clientIndexPath);
 }
 
 function authFailed(req, res) {
-  return res.redirect('/login?error=google_auth_failed');
+  return res.redirect(`${frontendLoginUrl}?error=google_auth_failed`);
 }
 
 function authSuccess(req, res) {
-  return res.redirect('/');
+  return res.redirect(env.frontendUrl);
 }
 
 function getSession(req, res) {
@@ -37,7 +44,7 @@ function logout(req, res, next) {
       }
 
       res.clearCookie('music.sid');
-      return res.redirect('/login');
+      return res.redirect(frontendLoginUrl);
     });
   });
 }

@@ -15,6 +15,7 @@ function getRequiredEnv(name) {
 
 module.exports = {
   appUrl: process.env.APP_URL || 'http://localhost:3000',
+  frontendUrl: process.env.FRONTEND_URL || process.env.APP_URL || 'http://localhost:3000',
   nodeEnv: process.env.NODE_ENV || 'development',
   port: process.env.PORT || 3000,
   databaseUrl: process.env.DATABASE_URL,

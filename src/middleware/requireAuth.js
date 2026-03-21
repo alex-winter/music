@@ -1,3 +1,5 @@
+const env = require('../config/env');
+
 function isApiRequest(req) {
   return req.path.startsWith('/api/') ||
     req.path.startsWith('/search') ||
@@ -17,7 +19,7 @@ function requireAuth(req, res, next) {
     return res.status(401).json({ error: 'Authentication required' });
   }
 
-  return res.redirect('/login');
+  return res.redirect(`${env.frontendUrl}/login`);
 }
 
 module.exports = requireAuth;

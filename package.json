@@ -4,6 +4,8 @@
   "main": "src/server.js",
   "scripts": {
     "build": "vite build",
+    "dev:client": "vite --host 0.0.0.0",
+    "dev:server": "node --watch src/server.js",
     "start": "node src/server.js",
     "prisma:generate": "prisma generate",
     "db:deploy": "prisma migrate deploy",
