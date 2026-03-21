@@ -1,6 +1,5 @@
 const express = require('express');
 const path = require('path');
-const cors = require('cors');
 
 require('./config/env');
 
@@ -18,7 +17,6 @@ const clientIndexPath = path.join(clientDistDir, 'index.html');
 
 configurePassport();
 
-app.use(cors());
 app.use(createSessionMiddleware());
 app.use(passport.initialize());
 app.use(passport.session());

@@ -33,6 +33,36 @@ body {
   letter-spacing: 0.01em;
 }
 
+.notice-shell {
+  position: sticky;
+  top: 16px;
+  z-index: 20;
+  padding: 16px 20px 0;
+}
+
+.notice-banner {
+  width: min(1100px, 100%);
+  margin: 0 auto;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 133, 133, 0.28);
+  background: rgba(92, 21, 31, 0.88);
+  color: #ffd7d7;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.28);
+}
+
+.notice-dismiss {
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: none;
+  padding: 8px 12px;
+}
+
 button,
 input,
 textarea,

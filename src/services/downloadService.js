@@ -1,14 +1,12 @@
 const fs = require('fs');
 const path = require('path');
 const yts = require('yt-search');
-const { exec } = require('child_process');
+const { execFile } = require('child_process');
 
 const DOWNLOAD_DIR = path.join(__dirname, '..', '..', 'downloads');
 const AUDIO_EXTENSIONS = ['.mp3', '.m4a', '.webm', '.wav', '.ogg'];
 
-if (!fs.existsSync(DOWNLOAD_DIR)) {
-  fs.mkdirSync(DOWNLOAD_DIR);
-}
+fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
 
 function getTrackBaseName(artistName, trackTitle) {
   return `${artistName} - ${trackTitle}`
@@ -70,12 +68,17 @@ async function downloadTrack(track) {
   }
 
   const outputPath = path.join(DOWNLOAD_DIR, getTrackBaseName(track.artist.name, track.title));
-  const command = `yt-dlp -x --audio-format mp3 -o "${outputPath}.%(ext)s" "${video.url}"`;
-
   console.log(`Downloading: ${query}`);
 
   return new Promise(resolve => {
-    exec(command, (error, stdout, stderr) => {
+    execFile('yt-dlp', [
+      '-x',
+      '--audio-format',
+      'mp3',
+      '-o',
+      `${outputPath}.%(ext)s`,
+      video.url
+    ], (error, stdout, stderr) => {
       if (error) {
         console.error(`Error downloading ${query}`, stderr);
         return resolve(false);

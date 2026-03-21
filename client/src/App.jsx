@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Link,
   Navigate,
@@ -10,13 +10,16 @@ import {
 } from 'react-router-dom';
 
 async function requestJson(path, options = {}) {
+  const headers = { ...(options.headers || {}) };
+
+  if (options.body && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
+
   const response = await fetch(path, {
     credentials: 'same-origin',
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers || {})
-    }
+    headers
   });
 
   if (response.status === 401) {
@@ -50,6 +53,7 @@ function App() {
   const [downloads, setDownloads] = useState([]);
   const [downloadsLoaded, setDownloadsLoaded] = useState(false);
   const [playlist, setPlaylist] = useState(null);
+  const [notice, setNotice] = useState(null);
   const previewAudioRef = useRef(null);
   const previewButtonResetRef = useRef(null);
   const location = useLocation();
@@ -152,21 +156,14 @@ function App() {
   }
 
   async function refreshDownloads() {
-    const nextDownloads = await requestJson('/api/downloads', { headers: {} });
+    const nextDownloads = await requestJson('/api/downloads');
     setDownloads(nextDownloads);
     setDownloadsLoaded(true);
     return nextDownloads;
   }
 
-  const downloadedTrackMap = useMemo(
-    () => new Map(downloads.map(file => [file.trackKey, file])),
-    [downloads]
-  );
-
-  const downloadedTrackKeys = useMemo(
-    () => new Set(downloads.map(file => file.trackKey)),
-    [downloads]
-  );
+  const downloadedTrackMap = new Map(downloads.map(file => [file.trackKey, file]));
+  const downloadedTrackKeys = new Set(downloads.map(file => file.trackKey));
 
   const appState = {
     user,
@@ -178,6 +175,8 @@ function App() {
     refreshDownloads,
     stopPreview,
     togglePreview,
+    notice,
+    setNotice,
     downloadedTrackKeys,
     downloadedTrackMap
   };
@@ -187,60 +186,63 @@ function App() {
   }
 
   return (
-    <Routes>
-      <Route
-        path="/login"
-        element={
-          sessionStatus === 'ready'
-            ? <Navigate to="/" replace />
-            : <LoginPage />
-        }
-      />
-      <Route
-        path="/"
-        element={
-          <RequireAuth sessionStatus={sessionStatus}>
-            <HomePage appState={appState} />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/artist/:artistId/albums"
-        element={
-          <RequireAuth sessionStatus={sessionStatus}>
-            <AlbumsPage appState={appState} />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/album/:albumId"
-        element={
-          <RequireAuth sessionStatus={sessionStatus}>
-            <AlbumPage appState={appState} />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/downloads"
-        element={
-          <RequireAuth sessionStatus={sessionStatus}>
-            <DownloadsPage appState={appState} />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/ai-playlist"
-        element={
-          <RequireAuth sessionStatus={sessionStatus}>
-            <AiPlaylistPage appState={appState} />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="*"
-        element={<Navigate to={sessionStatus === 'ready' ? '/' : '/login'} replace />}
-      />
-    </Routes>
+    <>
+      <NoticeBanner notice={notice} onDismiss={() => setNotice(null)} />
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            sessionStatus === 'ready'
+              ? <Navigate to="/" replace />
+              : <LoginPage />
+          }
+        />
+        <Route
+          path="/"
+          element={
+            <RequireAuth sessionStatus={sessionStatus}>
+              <HomePage appState={appState} />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/artist/:artistId/albums"
+          element={
+            <RequireAuth sessionStatus={sessionStatus}>
+              <AlbumsPage appState={appState} />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/album/:albumId"
+          element={
+            <RequireAuth sessionStatus={sessionStatus}>
+              <AlbumPage appState={appState} />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/downloads"
+          element={
+            <RequireAuth sessionStatus={sessionStatus}>
+              <DownloadsPage appState={appState} />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/ai-playlist"
+          element={
+            <RequireAuth sessionStatus={sessionStatus}>
+              <AiPlaylistPage appState={appState} />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="*"
+          element={<Navigate to={sessionStatus === 'ready' ? '/' : '/login'} replace />}
+        />
+      </Routes>
+    </>
   );
 }
 
@@ -258,6 +260,32 @@ function LoadingScreen() {
       <section className="page">
         <div className="empty">Loading your library...</div>
       </section>
+    </div>
+  );
+}
+
+function NoticeBanner({ notice, onDismiss }) {
+  useEffect(() => {
+    if (!notice) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(onDismiss, 5000);
+    return () => window.clearTimeout(timeoutId);
+  }, [notice, onDismiss]);
+
+  if (!notice) {
+    return null;
+  }
+
+  return (
+    <div className="notice-shell">
+      <div className="notice-banner" role="alert">
+        <span>{notice}</span>
+        <button type="button" className="notice-dismiss" onClick={onDismiss} aria-label="Dismiss message">
+          Close
+        </button>
+      </div>
     </div>
   );
 }
@@ -302,7 +330,8 @@ function TopNav({ activeView }) {
 }
 
 function LoginPage() {
-  const params = new URLSearchParams(window.location.search);
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
   const error = params.get('error');
 
   return (
@@ -335,6 +364,7 @@ function HomePage({ appState }) {
 
     if (!query.trim()) {
       setArtists([]);
+      setIsSearching(false);
       return undefined;
     }
 
@@ -342,7 +372,7 @@ function HomePage({ appState }) {
 
     const timeoutId = window.setTimeout(async () => {
       try {
-        const data = await requestJson(`/api/search?q=${encodeURIComponent(query.trim())}`, { headers: {} });
+        const data = await requestJson(`/api/search?q=${encodeURIComponent(query.trim())}`);
         if (!cancelled) {
           setArtists(data.slice(0, 10));
         }
@@ -412,10 +442,12 @@ function AlbumsPage({ appState }) {
 
     async function loadAlbums() {
       try {
-        const data = await requestJson(`/api/artist/${artistId}/albums`, { headers: {} });
+        const data = await requestJson(`/api/artist/${artistId}/albums`);
         if (!cancelled) {
           setAlbums(data);
-          if (!artist && data[0]?.artist) {
+          if (location.state?.artist) {
+            setArtist(location.state.artist);
+          } else if (data[0]?.artist) {
             setArtist(data[0].artist);
           }
           setStatus('ready');
@@ -432,7 +464,7 @@ function AlbumsPage({ appState }) {
     return () => {
       cancelled = true;
     };
-  }, [artistId, artist]);
+  }, [artistId, location.state]);
 
   return (
     <AppShell
@@ -473,7 +505,7 @@ function AlbumPage({ appState }) {
 
     async function loadAlbum() {
       try {
-        const data = await requestJson(`/api/album/${albumId}`, { headers: {} });
+        const data = await requestJson(`/api/album/${albumId}`);
         if (!cancelled) {
           setAlbum(data);
           setStatus('ready');
@@ -508,7 +540,7 @@ function AlbumPage({ appState }) {
       await appState.refreshDownloads();
       setAlbumActionStatus('done');
     } catch (error) {
-      window.alert(error.message);
+      appState.setNotice(error.message);
       setAlbumActionStatus('idle');
     }
   }
@@ -547,7 +579,7 @@ function AlbumPage({ appState }) {
 
 function TrackRow({ track, index, appState }) {
   const defaultSampleLabel = 'Sample';
-  const defaultLibraryLabel = appState.downloadedTrackKeys.has(getTrackKey(track)) ? 'Play' : 'Play';
+  const defaultLibraryLabel = 'Play';
   const [sampleLabel, setSampleLabel] = useState(defaultSampleLabel);
   const [libraryLabel, setLibraryLabel] = useState(defaultLibraryLabel);
   const [libraryBusy, setLibraryBusy] = useState(false);
@@ -595,7 +627,7 @@ function TrackRow({ track, index, appState }) {
 
       appState.togglePreview(file.url, libraryControls());
     } catch (error) {
-      window.alert(error.message);
+      appState.setNotice(error.message);
       setLibraryLabel('Play');
     } finally {
       setLibraryBusy(false);
@@ -680,7 +712,7 @@ function AiPlaylistPage({ appState }) {
 
   async function generatePlaylist() {
     if (!prompt.trim()) {
-      window.alert('Please enter a playlist prompt first.');
+      appState.setNotice('Please enter a playlist prompt first.');
       return;
     }
 
@@ -695,7 +727,7 @@ function AiPlaylistPage({ appState }) {
       appState.setPlaylist(nextPlaylist);
       await appState.refreshDownloads();
     } catch (error) {
-      window.alert(error.message);
+      appState.setNotice(error.message);
     } finally {
       setIsGenerating(false);
     }
@@ -794,7 +826,7 @@ function PlaylistSongCard({ song, index, appState }) {
       await appState.refreshDownloads();
       setLibraryLabel('Added');
     } catch (error) {
-      window.alert(error.message);
+      appState.setNotice(error.message);
       setLibraryLabel('Add');
     } finally {
       setIsAdding(false);
