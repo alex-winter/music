@@ -13,6 +13,8 @@ const requireAuth = require('./middleware/requireAuth');
 const { createSessionMiddleware, configurePassport, passport } = require('./lib/auth');
 
 const app = express();
+const clientDistDir = path.join(__dirname, '..', 'dist', 'client');
+const clientIndexPath = path.join(clientDistDir, 'index.html');
 
 configurePassport();
 
@@ -21,21 +23,27 @@ app.use(createSessionMiddleware());
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.json());
+app.use('/assets', express.static(path.join(clientDistDir, 'assets')));
 
 app.use(authRoutes);
 app.use('/media', requireAuth, express.static(DOWNLOAD_DIR));
-app.use(requireAuth);
-app.use(express.static(path.join(__dirname, '..', 'public')));
 
-app.get('/search', musicController.searchArtists);
-app.get('/artist/:id/albums', musicController.getArtistAlbums);
-app.get('/album/:id', musicController.getAlbumDetails);
-app.get('/downloads', downloadController.listDownloads);
-app.post('/download-album', downloadController.downloadAlbum);
-app.post('/download-track', downloadController.downloadTrack);
-app.post('/ai/playlist', aiController.generatePlaylist);
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
-});
+app.get('/api/search', requireAuth, musicController.searchArtists);
+app.get('/api/artist/:id/albums', requireAuth, musicController.getArtistAlbums);
+app.get('/api/album/:id', requireAuth, musicController.getAlbumDetails);
+app.get('/api/downloads', requireAuth, downloadController.listDownloads);
+app.post('/api/download-album', requireAuth, downloadController.downloadAlbum);
+app.post('/api/download-track', requireAuth, downloadController.downloadTrack);
+app.post('/api/ai/playlist', requireAuth, aiController.generatePlaylist);
+
+function sendClientApp(req, res) {
+  return res.sendFile(clientIndexPath);
+}
+
+app.get('/', requireAuth, sendClientApp);
+app.get('/downloads', requireAuth, sendClientApp);
+app.get('/ai-playlist', requireAuth, sendClientApp);
+app.get('/artist/:artistId/albums', requireAuth, sendClientApp);
+app.get('/album/:albumId', requireAuth, sendClientApp);
 
 module.exports = app;

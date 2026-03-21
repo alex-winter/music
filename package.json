@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "src/server.js",
   "scripts": {
+    "build": "vite build",
     "start": "node src/server.js",
     "prisma:generate": "prisma generate",
     "db:deploy": "prisma migrate deploy",
@@ -11,6 +12,7 @@
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",
     "@prisma/client": "^6.19.2",
+    "@vitejs/plugin-react": "^6.0.1",
     "axios": "^1.6.0",
     "connect-pg-simple": "^10.0.0",
     "cors": "^2.8.5",
@@ -21,6 +23,10 @@
     "passport-google-oauth20": "^2.0.0",
     "pg": "^8.20.0",
     "prisma": "^6.19.2",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-router-dom": "^7.13.1",
+    "vite": "^8.0.1",
     "yt-search": "^2.10.4"
   }
 }

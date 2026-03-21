@@ -30,11 +30,13 @@ RUN python3 -m pip install --no-cache-dir --break-system-packages yt-dlp \
 
 COPY package*.json ./
 
-RUN npm ci --omit=dev
+RUN npm ci
 
 COPY . .
 
+RUN npm run build
 RUN npx prisma generate
+RUN npm prune --omit=dev
 
 RUN mkdir -p /app/downloads
 

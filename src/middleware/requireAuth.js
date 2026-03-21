@@ -1,5 +1,6 @@
 function isApiRequest(req) {
-  return req.path.startsWith('/search') ||
+  return req.path.startsWith('/api/') ||
+    req.path.startsWith('/search') ||
     req.path.startsWith('/artist/') ||
     req.path.startsWith('/album/') ||
     req.path.startsWith('/downloads') ||

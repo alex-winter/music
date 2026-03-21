@@ -1,11 +1,12 @@
 const path = require('path');
+const clientIndexPath = path.join(__dirname, '..', '..', 'dist', 'client', 'index.html');
 
 function renderLoginPage(req, res) {
   if (req.isAuthenticated && req.isAuthenticated()) {
     return res.redirect('/');
   }
 
-  return res.sendFile(path.join(__dirname, '..', '..', 'public', 'login.html'));
+  return res.sendFile(clientIndexPath);
 }
 
 function authFailed(req, res) {
